@@ -27,9 +27,8 @@ services:
   - type: web
     name: roxstar-frontend
     runtime: static
-    rootDir: web
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    buildCommand: cd web && npm install && npm run build
+    staticPublishPath: ./web/dist
     routes:
       - type: rewrite
         source: /*

@@ -121,8 +121,8 @@ class TokenHandler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.NO_CONTENT, {})
 
     def do_GET(self) -> None:  # noqa: N802
-        if self.path == "/health":
-            self._send_json(HTTPStatus.OK, {"status": "ok"})
+        if self.path in ("/", "/health"):
+            self._send_json(HTTPStatus.OK, {"status": "ok", "service": "roxstar-token-server"})
             return
         self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
 
