@@ -1,0 +1,375 @@
+/* ================================================================ AI glyph
+ * Bar height = scaleY. `--rest` is the silhouette at rest, `--gain` its voice response,
+ * `--live` is written by AiGlyph from the real audio level while speaking.
+ */
+.glyph {
+  --size: 56px;
+  --bar-w: 3px;
+  --bar-gap: 4px;
+  --bar-h: 46%;
+  --bar-color: var(--ink);
+  position: relative;
+  flex: none;
+  width: var(--size);
+  height: var(--size);
+  display: grid;
+  place-items: center;
+}
+
+.glyph--sm {
+  --size: 36px;
+  --bar-w: 2px;
+  --bar-gap: 3px;
+}
+
+.glyph--xs {
+  --size: 16px;
+  --bar-w: 1.5px;
+  --bar-gap: 1.5px;
+  --bar-h: 70%;
+}
+
+.glyph--xs .glyph__ring {
+  display: none;
+}
+
+.glyph__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  transition:
+    border-color var(--dur-slow) var(--ease),
+    transform var(--dur-slow) var(--ease),
+    background var(--dur-slow) var(--ease);
+}
+
+.glyph__bars {
+  position: relative;
+  height: var(--bar-h);
+  display: flex;
+  align-items: center;
+  gap: var(--bar-gap);
+}
+
+.glyph__bar {
+  width: var(--bar-w);
+  height: 100%;
+  border-radius: var(--bar-w);
+  background: var(--bar-color);
+  transform: scaleY(var(--rest));
+  transition:
+    transform 220ms var(--ease),
+    background var(--dur-slow) var(--ease),
+    opacity var(--dur-slow) var(--ease);
+}
+
+/* Listening: the smallest possible breath, so the room feels attended without moving. */
+.glyph[data-state='listening'] .glyph__bar {
+  animation: glyph-breathe 4.8s var(--ease-in-out) infinite;
+  animation-delay: calc(var(--i) * 180ms);
+}
+
+@keyframes glyph-breathe {
+  0%,
+  100% {
+    transform: scaleY(var(--rest));
+  }
+  50% {
+    transform: scaleY(calc(var(--rest) * 1.18));
+  }
+}
+
+/* Idle (nobody listening): flat and quiet. */
+.glyph[data-state='idle'] .glyph__bar {
+  --bar-color: var(--ink-3);
+}
+
+/* Thinking: a single pulse travelling across the bars. */
+.glyph[data-state='thinking'] .glyph__bar {
+  --bar-color: var(--ink-2);
+  animation: glyph-think 1.15s var(--ease-in-out) infinite;
+  animation-delay: calc(var(--i) * 110ms);
+}
+
+@keyframes glyph-think {
+  0%,
+  70%,
+  100% {
+    transform: scaleY(calc(var(--rest) * 0.8));
+  }
+  30% {
+    transform: scaleY(calc(0.3 + var(--gain) * 0.45));
+  }
+}
+
+/* Responding (the reply is ready, voice is starting): the silhouette lifts, in accent. */
+.glyph[data-state='replying'] .glyph__bar {
+  --bar-color: var(--accent);
+  transform: scaleY(calc(var(--rest) + var(--gain) * 0.22));
+}
+
+.glyph[data-state='replying'] .glyph__ring {
+  border-color: var(--accent);
+}
+
+/* Speaking: real audio level drives every bar. */
+.glyph[data-state='speaking'] .glyph__bar {
+  --bar-color: var(--accent);
+  transform: scaleY(var(--live, var(--rest)));
+  transition:
+    transform 60ms linear,
+    background var(--dur) var(--ease);
+}
+
+.glyph[data-state='speaking'] .glyph__ring {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: scale(1.06);
+}
+
+/* Interrupted: the voice collapses, one amber beat, then it settles back. */
+.glyph[data-state='interrupted'] .glyph__bar {
+  --bar-color: var(--warn);
+  transform: scaleY(0.12);
+  transition-duration: 140ms;
+}
+
+.glyph[data-state='interrupted'] .glyph__ring {
+  border-color: var(--warn);
+  animation: glyph-jolt 520ms var(--ease) 1;
+}
+
+@keyframes glyph-jolt {
+  0% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Joining / reconnecting: a slow sequential shimmer. Present, not ready. */
+.glyph[data-state='joining'] .glyph__bar,
+.glyph[data-state='reconnecting'] .glyph__bar {
+  --bar-color: var(--ink-3);
+  transform: scaleY(0.16);
+  animation: glyph-wait 1.4s var(--ease-in-out) infinite;
+  animation-delay: calc(var(--i) * 140ms);
+}
+
+.glyph[data-state='joining'] .glyph__ring,
+.glyph[data-state='reconnecting'] .glyph__ring {
+  border-style: dashed;
+}
+
+@keyframes glyph-wait {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Not in the room. */
+.glyph[data-state='absent'] .glyph__bar {
+  --bar-color: var(--ink-4);
+  transform: scaleY(0.12);
+}
+
+.glyph[data-state='absent'] .glyph__ring {
+  border-style: dashed;
+  border-color: var(--ink-4);
+}
+
+/* ================================================================ AI presence */
+
+.ai {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-2) var(--space-3);
+  text-align: center;
+  transition:
+    opacity var(--dur-slow) var(--ease),
+    transform var(--dur-slow) var(--ease);
+}
+
+.ai__text {
+  display: grid;
+  gap: 1px;
+}
+
+.ai__name {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+}
+
+.ai__meta {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.ai__state {
+  margin-top: var(--space-2);
+  height: 18px;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  transition: color var(--dur) var(--ease);
+}
+
+.ai__state-label {
+  display: inline-block;
+  animation: state-in var(--dur) var(--ease);
+}
+
+@keyframes state-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ai[data-state='speaking'] .ai__state,
+.ai[data-state='replying'] .ai__state {
+  color: var(--accent-ink);
+}
+
+.ai[data-state='interrupted'] .ai__state {
+  color: var(--warn);
+}
+
+.ai[data-state='joining'] .ai__state,
+.ai[data-state='absent'] .ai__state,
+.ai[data-state='idle'] .ai__state {
+  color: var(--ink-3);
+}
+
+.ai[data-state='absent'] .ai__name {
+  color: var(--ink-3);
+}
+
+/* ================================================================ Human presence */
+
+.humans {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.human {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  animation: fade-up var(--dur-slow) var(--ease);
+  transition: opacity var(--dur-slow) var(--ease);
+}
+
+.human__figure {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  --level: 0;
+}
+
+.human__disc {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--human-disc);
+  color: var(--human-disc-ink);
+  font-size: 0.6875rem;
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.02em;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.human__halo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--accent);
+  opacity: 0;
+  transform: scale(1);
+  transition:
+    opacity var(--dur) var(--ease),
+    transform 80ms linear;
+}
+
+.human[data-speaking] .human__halo {
+  opacity: 1;
+  transform: scale(calc(1.14 + var(--level) * 0.24));
+}
+
+.human[data-speaking] .human__disc {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.human__name {
+  font-size: var(--text-md);
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--dur) var(--ease);
+}
+
+.human[data-speaking] .human__name {
+  color: var(--ink);
+}
+
+.human__you {
+  color: var(--ink-3);
+}
+
+.human__muted {
+  color: var(--ink-4);
+}
+
+/* ================================================================ Active speaker
+ * When anyone speaks, everyone else steps back slightly. Pure CSS: no re-render.
+ */
+.stage:has(.ai[data-state='speaking'], .human[data-speaking])
+  .ai:not([data-state='speaking'], [data-state='replying']),
+.stage:has(.ai[data-state='speaking'], .human[data-speaking]) .human:not([data-speaking]) {
+  opacity: 0.42;
+}
+
+.stage:has(.ai[data-state='speaking']) .ai[data-state='speaking'] {
+  transform: translateY(-2px);
+}
+
+.human__icons {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.human__net {
+  color: var(--warn);
+}
+
+/* Speaking isn't told by colour alone: the name also gains weight. */
+.human[data-speaking] .human__name {
+  font-weight: var(--weight-medium);
+}

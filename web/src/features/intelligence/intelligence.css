@@ -1,0 +1,505 @@
+/* ================================================================ Panel shell
+ * A secondary layer: slides over the room on desktop, rises as a sheet on phones.
+ */
+.panel {
+  position: fixed;
+  top: var(--space-2);
+  right: var(--space-2);
+  bottom: var(--space-2);
+  width: 380px;
+  max-width: calc(100vw - var(--space-4));
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 1px var(--line),
+    var(--shadow-3);
+  transform: translateX(calc(100% + var(--space-4)));
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform var(--dur-slow) var(--ease),
+    opacity var(--dur) var(--ease),
+    visibility 0s linear var(--dur-slow);
+  z-index: 40;
+  outline: none;
+}
+
+.panel[data-open] {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform var(--dur-slow) var(--ease),
+    opacity var(--dur) var(--ease);
+}
+
+.panel-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 17, 19, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-slow) var(--ease);
+  z-index: 39;
+  display: none;
+}
+
+.panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2) var(--space-3) var(--space-4);
+}
+
+.panel__body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-2) var(--space-5) var(--space-6);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: var(--radius-full);
+  background: var(--surface-sunken);
+}
+
+.segmented__item {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.segmented__item:hover {
+  color: var(--ink);
+}
+
+.segmented__item[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px var(--line),
+    var(--shadow-1);
+}
+
+.intel,
+.debug {
+  display: grid;
+  gap: var(--space-6);
+  animation: fade-in var(--dur) var(--ease);
+}
+
+.intel__section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.intel__heading {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--ink-3);
+}
+
+.intel__note {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+/* ================================================================ Inspector */
+
+.inspector {
+  margin: 0;
+  display: grid;
+}
+
+.inspector__row {
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+  animation: fade-in var(--dur) var(--ease);
+}
+
+.inspector__row:first-child {
+  padding-top: var(--space-1);
+}
+
+.inspector__row dt {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+.inspector__row dd {
+  margin: 0;
+  display: grid;
+  grid-auto-flow: row;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.inspector__row[data-live] dd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--accent-ink);
+}
+
+.inspector__pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 1.2s var(--ease-in-out) infinite;
+}
+
+.inspector__sub {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  color: var(--ink-3);
+}
+
+/* ================================================================ Recent decisions */
+
+.decisions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.decision {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+  animation: fade-in var(--dur) var(--ease);
+}
+
+.decision__who {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}
+
+.decision__quote {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: var(--weight-regular);
+  color: var(--ink-3);
+}
+
+.decision__route {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.decision__route[data-silent] {
+  color: var(--ink-3);
+}
+
+.decision__reply {
+  font-size: var(--text-xs);
+  color: var(--warn);
+}
+
+.decision__reply[data-ok] {
+  color: var(--ink-3);
+}
+
+/* ================================================================ Timeline */
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-1) 0;
+  max-height: 340px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.timeline__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px 11px 1fr;
+  gap: var(--space-2);
+  align-items: start;
+  padding: 5px 0;
+  animation: fade-in var(--dur) var(--ease);
+}
+
+/* The rail connecting the dots. */
+.timeline__item::before {
+  content: '';
+  position: absolute;
+  left: calc(52px + var(--space-2) + 5px);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+
+.timeline__item:first-child::before {
+  top: 12px;
+}
+
+.timeline__item:last-child::before {
+  bottom: calc(100% - 12px);
+}
+
+.timeline__time {
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-4);
+  line-height: 18px;
+  text-align: right;
+}
+
+.timeline__dot {
+  position: relative;
+  z-index: 1;
+  width: 7px;
+  height: 7px;
+  margin: 5.5px 2px 0;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1.5px var(--ink-3);
+}
+
+.timeline__item[data-tone='live'] .timeline__dot {
+  box-shadow: none;
+  background: var(--accent);
+}
+
+.timeline__item[data-tone='warn'] .timeline__dot {
+  box-shadow: none;
+  background: var(--warn);
+}
+
+.timeline__item[data-tone='quiet'] .timeline__dot {
+  box-shadow: inset 0 0 0 1.5px var(--ink-4);
+}
+
+.timeline__text {
+  display: grid;
+  line-height: 18px;
+  min-width: 0;
+}
+
+.timeline__title {
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+.timeline__item[data-tone='quiet'] .timeline__title {
+  color: var(--ink-3);
+}
+
+.timeline__item[data-tone='warn'] .timeline__title {
+  color: var(--warn);
+}
+
+.timeline__detail {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
+/* ================================================================ Debug key/values */
+
+.kvs {
+  margin: 0;
+  display: grid;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-sm);
+}
+
+.kv dt {
+  color: var(--ink-3);
+}
+
+.kv dd {
+  margin: 0;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.kv[data-tone] dd::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  vertical-align: 1px;
+  background: var(--accent);
+}
+
+.kv[data-tone='warn'] dd::before {
+  background: var(--warn);
+}
+
+.people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.people li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-sm);
+}
+
+.people li span:first-child {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 20px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.people li span:last-child {
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.debug__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.btn--outline {
+  height: var(--control-sm);
+  padding: 0 var(--space-3);
+  color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.btn--outline:hover {
+  color: var(--ink);
+  background: var(--surface-sunken);
+}
+
+/* ================================================================ Phone: bottom sheet */
+
+@media (max-width: 760px) {
+  .panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    height: min(80dvh, 680px);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    transform: translateY(100%);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 36px;
+    height: 4px;
+    translate: -50% 0;
+    border-radius: 2px;
+    background: var(--line-strong);
+  }
+
+  .panel__head {
+    padding-top: var(--space-4);
+  }
+
+  .panel-backdrop {
+    display: block;
+  }
+
+  .panel-backdrop[data-open] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* ================================================================ Wide screens
+ * With room to spare, the panel docks beside the conversation instead of covering it.
+ */
+@media (min-width: 1180px) {
+  .panel {
+    top: calc(56px + var(--space-2));
+  }
+
+  .room__body {
+    transition: padding-right var(--dur-slow) var(--ease);
+  }
+
+  .room[data-panel] .room__body {
+    padding-right: calc(380px + var(--space-3));
+  }
+}
+
+/* Below desktop width the panel is modal: dim the room and close on a tap outside. */
+@media (max-width: 1179px) {
+  .panel-backdrop {
+    display: block;
+  }
+
+  .panel-backdrop[data-open] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Touch: the tab plus the track's padding is a 46px target; the track stays one quiet pill. */
+@media (pointer: coarse) {
+  .segmented__item {
+    position: relative;
+    height: 40px;
+    padding: 0 var(--space-4);
+  }
+
+  .segmented__item::after {
+    content: '';
+    position: absolute;
+    inset: -3px 0;
+  }
+}

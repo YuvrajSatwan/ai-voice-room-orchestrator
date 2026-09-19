@@ -1,0 +1,103 @@
+/*
+ * Roxstar design tokens. Every colour, size, space and duration in the UI comes from here.
+ *
+ * Colour rule: the interface is neutral. The one accent (green) means only one thing,
+ * "live / someone is speaking". Amber and red appear only for real problems.
+ */
+:root {
+  /* Neutrals */
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --surface-sunken: #f3f3f1;
+  --ink: #111113;
+  --ink-2: #4b4b52; /* secondary text */
+  --ink-3: #8a8a92; /* tertiary text, placeholders */
+  --ink-4: #c4c4c9; /* disabled, quiet strokes */
+  --line: rgba(17, 17, 19, 0.08);
+  --line-strong: rgba(17, 17, 19, 0.14);
+
+  /* The one accent: live, speaking */
+  --accent: #0e9f6e;
+  --accent-soft: rgba(14, 159, 110, 0.12);
+  --accent-ink: #067a54;
+
+  /* State colours: problems only */
+  --warn: #c2710c;
+  --warn-soft: rgba(194, 113, 12, 0.12);
+  --danger: #d1343a;
+  --danger-soft: rgba(209, 52, 58, 0.1);
+
+  /* AI presence: dark discs, so AI is recognisable before you read a word */
+  --ai-disc: #18181b;
+  --ai-disc-ink: #fafaf9;
+  --human-disc: #ececea;
+  --human-disc-ink: #3f3f46;
+
+  /* Type */
+  --font: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+  --text-xs: 0.75rem; /* 12 */
+  --text-sm: 0.8125rem; /* 13 */
+  --text-md: 0.9375rem; /* 15: body */
+  --text-lg: 1.0625rem; /* 17 */
+  --text-xl: 1.375rem; /* 22 */
+  --text-2xl: 1.75rem; /* 28 */
+  --text-3xl: 2.5rem; /* 40 */
+  --leading-tight: 1.2;
+  --leading-body: 1.55;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Space: a 4px scale; nothing in the UI uses a value outside it */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+
+  /* Depth: barely there */
+  --shadow-1: 0 1px 2px rgba(17, 17, 19, 0.05);
+  --shadow-2: 0 1px 2px rgba(17, 17, 19, 0.04), 0 8px 24px rgba(17, 17, 19, 0.06);
+  --shadow-3: 0 2px 6px rgba(17, 17, 19, 0.05), 0 24px 48px rgba(17, 17, 19, 0.1);
+
+  /* Motion: short, with a gentle settle. Motion explains a state change or doesn't happen. */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 360ms;
+
+  /* Hit targets */
+  --control-sm: 32px;
+  --control-md: 40px;
+  --control-lg: 52px;
+
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px rgba(17, 17, 19, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur: 1ms;
+    --dur-slow: 1ms;
+  }
+}
+
+/* Touch devices: minimal never means hard to tap. Every control reaches a 44px target. */
+@media (pointer: coarse) {
+  :root {
+    --control-sm: 40px;
+    --control-md: 44px;
+    --control-lg: 60px;
+  }
+}

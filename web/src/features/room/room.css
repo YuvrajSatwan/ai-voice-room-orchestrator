@@ -1,0 +1,748 @@
+/* ================================================================ Room shell
+ * Sized to the visual viewport (`--app-h`, see app/viewport.ts) so the composer stays above
+ * a phone keyboard. Falls back to 100dvh.
+ */
+.room {
+  height: var(--app-h, 100dvh);
+  display: grid;
+  grid-template-rows: auto 0 1fr;
+  overflow: hidden;
+}
+
+.room-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0 var(--space-3) 0 var(--space-5);
+  padding-top: env(safe-area-inset-top);
+  box-sizing: content-box;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.room-header__id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.wordmark {
+  flex: none;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.room-header__room {
+  position: relative;
+  min-width: 0;
+  padding-left: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.room-header__room::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 1px;
+  height: 12px;
+  transform: translateY(-50%);
+  background: var(--line-strong);
+}
+
+.room-header__id .icon-btn {
+  flex: none;
+  margin-left: calc(var(--space-1) * -1);
+  color: var(--ink-3);
+}
+
+.icon-btn--sm {
+  width: var(--control-sm);
+  height: var(--control-sm);
+}
+
+.room-header__side {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.live__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-4);
+  transition: background var(--dur) var(--ease);
+}
+
+.live[data-live] {
+  color: var(--ink-2);
+}
+
+.live[data-live] .live__dot {
+  background: var(--accent);
+}
+
+.live[data-phase='reconnecting'] {
+  color: var(--warn);
+}
+
+.live[data-phase='reconnecting'] .live__dot {
+  background: var(--warn);
+  animation: blink 1s var(--ease-in-out) infinite;
+}
+
+.room-header__panel-btn {
+  height: var(--control-sm);
+  padding: 0 var(--space-3) 0 10px;
+  gap: 6px;
+}
+
+.room-header__panel-btn[aria-expanded='true'] {
+  background: var(--surface-sunken);
+  color: var(--ink);
+}
+
+[data-tip-below]::after {
+  top: calc(100% + var(--space-2));
+  bottom: auto;
+}
+
+/* ================================================================ Notice (brief events only) */
+
+.notice-slot {
+  position: relative;
+  z-index: 25;
+}
+
+.notice {
+  position: absolute;
+  top: var(--space-3);
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: max-content;
+  max-width: min(560px, calc(100vw - var(--space-6)));
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--line),
+    var(--shadow-2);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--ink-2);
+  animation: notice-in var(--dur-slow) var(--ease);
+}
+
+.notice > svg {
+  flex: none;
+}
+
+.notice > span {
+  flex: 1;
+  padding: var(--space-1) 0;
+}
+
+.notice:not(:has(.notice__action)) {
+  padding-right: var(--space-4);
+}
+
+.notice[data-tone='warn'] > svg {
+  color: var(--warn);
+}
+
+.notice[data-tone='ok'] > svg {
+  color: var(--accent);
+}
+
+.notice__action {
+  flex: none;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--bg);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  transition:
+    background var(--dur) var(--ease),
+    transform var(--dur-fast) var(--ease);
+}
+
+.notice__action:hover {
+  background: #2a2a2e;
+}
+
+.notice__action:active {
+  transform: scale(0.96);
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ================================================================ Body grid (desktop) */
+
+.room__body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(340px, 400px) 1fr;
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    'stage conversation'
+    'controls conversation';
+}
+
+/*
+ * The stage: a quiet status line on top; the AI pair and the people in the room form one
+ * centred cluster, separated by a hairline. No pooled empty space between them.
+ */
+.stage {
+  grid-area: stage;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-5) var(--space-2);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--space-4);
+  scrollbar-width: none;
+}
+
+.stage__cluster {
+  align-self: center;
+  display: grid;
+  gap: var(--space-6);
+  padding-bottom: var(--space-6);
+}
+
+.room__controls {
+  grid-area: controls;
+  padding: var(--space-3) var(--space-5) calc(var(--space-5) + env(safe-area-inset-bottom));
+}
+
+.conversation {
+  grid-area: conversation;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+}
+
+.conversation__composer {
+  padding: var(--space-2) var(--space-6) calc(var(--space-5) + env(safe-area-inset-bottom));
+}
+
+/* ================================================================ Status line */
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 24px;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+  transition: color var(--dur) var(--ease);
+}
+
+.status__text {
+  min-width: 0;
+  animation: state-in var(--dur) var(--ease);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status__dot {
+  position: relative;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-4);
+  transition: background var(--dur) var(--ease);
+}
+
+.status[data-tone='live'] {
+  color: var(--ink);
+}
+
+.status[data-tone='live'] .status__dot {
+  background: var(--accent);
+}
+
+.status[data-tone='live'] .status__dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+  animation: ripple 1.6s var(--ease) infinite;
+}
+
+.status[data-tone='warn'] {
+  color: var(--warn);
+}
+
+.status[data-tone='warn'] .status__dot {
+  background: var(--warn);
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* ================================================================ Stage parts */
+
+.stage__ai {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.stage__humans {
+  display: grid;
+  gap: var(--space-1);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
+}
+
+.stage__label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  color: var(--ink-3);
+}
+
+.stage__count {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-4);
+}
+
+.stage__count::before {
+  content: '·';
+  margin-right: 6px;
+}
+
+/* ================================================================ Full-screen states */
+
+.fullscreen {
+  height: var(--app-h, 100dvh);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  text-align: center;
+  animation: fade-in var(--dur-slow) var(--ease);
+}
+
+.fullscreen__glyphs {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.fullscreen__title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.02em;
+}
+
+.fullscreen__body {
+  max-width: 38ch;
+  color: var(--ink-3);
+}
+
+.fullscreen__actions {
+  margin-top: var(--space-5);
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* ================================================================ Laptop / tablet */
+
+@media (max-width: 1100px) {
+  .room__body {
+    grid-template-columns: minmax(280px, 320px) 1fr;
+  }
+
+  .stage {
+    padding: var(--space-5) var(--space-4) var(--space-2);
+  }
+
+  .stage .glyph {
+    --size: 48px;
+  }
+
+  .conversation__composer {
+    padding: var(--space-2) var(--space-5) calc(var(--space-4) + env(safe-area-inset-bottom));
+  }
+
+  .leave-btn__text {
+    display: none;
+  }
+
+  .leave-btn {
+    width: var(--control-md);
+    padding: 0;
+  }
+}
+
+/* ================================================================ Phone
+ * A deliberate composition, not stacked columns:
+ *   header · status + people · the two AI presences · conversation · composer · mic
+ * The conversation gets every pixel the rest doesn't need.
+ */
+@media (max-width: 760px) {
+  .room-header {
+    height: 48px;
+    padding-left: var(--space-4);
+    padding-right: var(--space-1);
+    gap: var(--space-2);
+  }
+
+  .live {
+    padding: 0 var(--space-2);
+  }
+
+  .live__label,
+  .room-header__panel-label {
+    display: none;
+  }
+
+  .room-header__panel-btn {
+    width: var(--control-md);
+    height: var(--control-md);
+    padding: 0;
+  }
+
+  .room__body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'stage'
+      'conversation'
+      'controls';
+  }
+
+  .stage {
+    overflow: visible;
+    padding: var(--space-3) var(--space-4) var(--space-3);
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      'status people'
+      'ai ai';
+    gap: var(--space-3) var(--space-3);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .stage__cluster {
+    display: contents;
+  }
+
+  .stage .status {
+    grid-area: status;
+    font-size: var(--text-sm);
+    min-height: 32px;
+  }
+
+  /* The AI pair: presences, not cards. */
+  .stage__ai {
+    grid-area: ai;
+    gap: var(--space-4);
+  }
+
+  .stage .ai {
+    grid-template-columns: auto minmax(0, 1fr);
+    justify-items: start;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0;
+    text-align: left;
+  }
+
+  .stage .glyph {
+    --size: 40px;
+    --bar-w: 2.5px;
+    --bar-gap: 3px;
+  }
+
+  .stage .ai__text {
+    min-width: 0;
+  }
+
+  .stage .ai__name {
+    font-size: var(--text-md);
+    letter-spacing: -0.01em;
+  }
+
+  .stage .ai__meta {
+    display: none;
+  }
+
+  .stage .ai__state {
+    margin-top: 0;
+    height: 18px;
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .stage:has(.ai[data-state='speaking']) .ai[data-state='speaking'] {
+    transform: none;
+  }
+
+  /* People: an overlapping stack beside the status; a speaker's ring still shows who. */
+  .stage__humans {
+    grid-area: people;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0;
+    border: 0;
+  }
+
+  .stage__label {
+    order: 2;
+    margin: 0;
+    line-height: 1;
+  }
+
+  .stage__label-text {
+    display: none;
+  }
+
+  .stage__count::before {
+    content: none;
+  }
+
+  .humans {
+    display: flex;
+    align-items: center;
+  }
+
+  .human {
+    display: flex;
+    min-height: 0;
+    animation: none;
+  }
+
+  .human + .human {
+    margin-left: -6px;
+  }
+
+  .human:nth-child(n + 5) {
+    display: none; /* the count carries the rest */
+  }
+
+  .human__disc {
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+
+  .human__name,
+  .human__icons {
+    display: none;
+  }
+
+  /* A tiny stack stays legible: no dimming here; a speaker's ring still shows who it is. */
+  .stage__humans .human {
+    opacity: 1 !important;
+  }
+
+  .conversation {
+    border-left: 0;
+  }
+
+  .conversation__composer {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .room__controls {
+    padding: var(--space-2) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+
+  .controls-area {
+    gap: var(--space-2);
+  }
+
+  .controls {
+    gap: var(--space-5);
+  }
+
+  .notice {
+    width: auto;
+    left: var(--space-3);
+    right: var(--space-3);
+    translate: none;
+    max-width: none;
+  }
+
+  /*
+   * Typing mode: while the keyboard is up, voice controls and secondary rows fold away so
+   * the conversation keeps its space. They return as soon as the composer loses focus.
+   */
+  .room:has(.composer__input:focus) .room__controls,
+  .room:has(.composer__input:focus) .stage .status,
+  .room:has(.composer__input:focus) .stage__humans {
+    display: none;
+  }
+
+  .room:has(.composer__input:focus) .stage {
+    grid-template-areas: 'ai ai';
+    padding-block: var(--space-2);
+  }
+
+  .room:has(.composer__input:focus) .conversation__composer {
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+  }
+}
+
+/* Very narrow phones (~320px): tighter gutters, same composition. */
+@media (max-width: 360px) {
+  .room-header__room {
+    display: none;
+  }
+
+  .stage {
+    padding-inline: var(--space-3);
+  }
+
+  .stage__ai {
+    gap: var(--space-3);
+  }
+
+  .stage .glyph {
+    --size: 36px;
+    --bar-w: 2px;
+  }
+
+  .controls {
+    gap: var(--space-3);
+  }
+}
+
+/* ================================================================ Short screens / landscape
+ * When height is scarce, secondary spacing goes first. The conversation, the active
+ * presence and the mic stay.
+ */
+@media (max-height: 540px) and (min-width: 761px) {
+  .room-header {
+    height: 44px;
+  }
+
+  .stage {
+    padding: var(--space-3) var(--space-4) 0;
+    gap: var(--space-2);
+  }
+
+  .stage__cluster {
+    align-self: start;
+    gap: var(--space-3);
+    padding-bottom: var(--space-2);
+  }
+
+  .stage .ai {
+    grid-template-columns: auto minmax(0, 1fr);
+    justify-items: start;
+    align-items: center;
+    text-align: left;
+    gap: var(--space-2);
+    padding: 0;
+  }
+
+  .stage .glyph {
+    --size: 36px;
+    --bar-w: 2px;
+    --bar-gap: 3px;
+  }
+
+  .stage .ai__name {
+    font-size: var(--text-md);
+  }
+
+  .stage .ai__meta {
+    display: none;
+  }
+
+  .stage .ai__state {
+    margin-top: 0;
+    font-size: var(--text-xs);
+  }
+
+  .stage__humans {
+    padding-top: var(--space-3);
+  }
+
+  .human {
+    min-height: 32px;
+  }
+
+  .room__controls {
+    padding: var(--space-2) var(--space-4) calc(var(--space-2) + env(safe-area-inset-bottom));
+  }
+
+  .transcript__scroll {
+    padding-top: var(--space-4);
+  }
+
+  .conversation__composer {
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-height: 540px) and (max-width: 760px) {
+  .stage .status {
+    min-height: 24px;
+  }
+
+  .room__controls {
+    padding-top: var(--space-1);
+  }
+}
