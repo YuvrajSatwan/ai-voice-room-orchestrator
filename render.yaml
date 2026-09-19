@@ -34,8 +34,7 @@ services:
         source: /*
         destination: /index.html
     envVars:
+      # The browser needs the backend's PUBLIC URL. fromService "host" gives Render's
+      # internal hostname (roxstar-backend-fe1e), which browsers cannot resolve.
       - key: VITE_TOKEN_URL
-        fromService:
-          type: web
-          name: roxstar-backend
-          property: host
+        value: https://roxstar-backend-fe1e.onrender.com
