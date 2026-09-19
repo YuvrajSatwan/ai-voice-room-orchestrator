@@ -18,7 +18,7 @@ from collections.abc import Callable
 
 import livekit.plugins.sarvam as sarvam
 from livekit import rtc
-from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli
+from livekit.agents import AutoSubscribe, JobContext, JobExecutorType, WorkerOptions, cli
 
 from roxstar.brain import RoomBrain
 from roxstar.config import AGENT_NAME, Settings
@@ -234,6 +234,12 @@ def main() -> None:
             # that, so LiveKit stops sending rooms). Start jobs on demand, never refuse rooms.
             num_idle_processes=0,
             load_threshold=float("inf"),
+            # Render's small instances cannot afford a second Python process for every room:
+            # it would reload LiveKit, Sarvam and Gemini beside the HTTP service. Threads reuse
+            # the loaded runtime, while the room brain still remains isolated per job.
+            job_executor_type=JobExecutorType.THREAD,
+            # A free-tier instance may be cold when LiveKit dispatches the first room.
+            initialize_process_timeout=60.0,
         )
     )
 
