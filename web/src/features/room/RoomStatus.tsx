@@ -29,7 +29,7 @@ export function RoomStatus({ brainPresent, botsPresent }: { brainPresent: boolea
   else if (responding) {
     tone = 'live';
     text = `${AI_PROFILES[responding].name} is responding`;
-  } else if (!botsPresent) text = 'Waiting for Dost and Sathi';
+  } else if (!botsPresent) text = 'Waiting for Kabir and Saraah';
   else if (brainPresent) text = 'Listening to the room';
   else text = 'Getting the room ready';
 

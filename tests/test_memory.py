@@ -46,7 +46,7 @@ def test_prompt_labels_every_speaker_including_bots() -> None:
     memory.record_bot(Persona.DOST, "AI ek technology hai.")
     context = memory.prompt_context("Rahul")
     assert "- Rahul: AI kya hota hai?" in context
-    assert "- Roxstar AI Dost: AI ek technology hai." in context
+    assert "- Kabir: AI ek technology hai." in context
     assert memory.last_responder is Persona.DOST
 
 

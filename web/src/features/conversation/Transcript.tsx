@@ -189,7 +189,7 @@ function EmptyConversation({ botsPresent }: { botsPresent: boolean }) {
           <AiGlyph persona="dost" state="joining" size="sm" />
           <AiGlyph persona="sathi" state="joining" size="sm" />
         </div>
-        <p className="empty__title">Bringing Dost and Sathi in</p>
+        <p className="empty__title">Bringing Kabir and Saraah in</p>
         <p className="empty__body">They'll join the room in a moment.</p>
       </div>
     );
@@ -198,7 +198,7 @@ function EmptyConversation({ botsPresent }: { botsPresent: boolean }) {
     <div className="empty">
       <p className="empty__title">Everyone's here.</p>
       <p className="empty__body">
-        Start talking whenever you're ready. Say “Dost” or “Sathi” to choose who answers.
+        Start talking whenever you're ready. Say “Kabir” or “Saraah” to choose who answers.
       </p>
     </div>
   );

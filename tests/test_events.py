@@ -53,7 +53,7 @@ async def test_a_silent_turn_still_explains_why() -> None:
 
 async def test_two_bot_turn_shows_both_bots_in_order() -> None:
     brain, events, _ = brain_with_events()
-    await brain.handle_turn(speaker="Rahul", text="Dost answer karo, phir Sathi", channel=VOICE)
+    await brain.handle_turn(speaker="Rahul", text="Kabir answer karo, phir Saraah", channel=VOICE)
     assert [(e["event"], e.get("bot")) for e in events if e["event"] != "routed"] == [
         ("thinking", "dost"),
         ("turn_done", "dost"),

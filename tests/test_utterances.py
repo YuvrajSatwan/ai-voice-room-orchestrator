@@ -47,10 +47,10 @@ async def test_speaking_again_keeps_the_turn_open_until_the_next_final() -> None
 
 async def test_max_wait_delivers_even_if_the_next_final_never_comes() -> None:
     m, out = merger()
-    m.final("AI Dost,")
+    m.final("Kabir,")
     m.speech_started()  # a cough, then nothing
     await asyncio.sleep(0.6)
-    assert out == ["AI Dost,"]
+    assert out == ["Kabir,"]
 
 
 async def test_flush_sends_what_was_said_before_the_stream_closed() -> None:
@@ -65,8 +65,9 @@ async def test_flush_sends_what_was_said_before_the_stream_closed() -> None:
 @pytest.mark.parametrize(
     ("text", "unfinished"),
     [
-        ("AI Sathi", True),
-        ("Hey Dost,", True),
+        ("Saraah", True),
+        ("Hey Kabir,", True),
+        ("हेलो सारा।", True),
         ("AI साथी।", True),
         ("Cloud kya hai aur", True),
         ("Mujhe photo", False),  # ends in "to" inside a word: finished

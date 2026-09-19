@@ -38,7 +38,7 @@ export function RoomNotice({ botsPresent }: { botsPresent: boolean }) {
     notice = {
       tone: 'warn',
       icon: <TriangleAlert {...ICON} />,
-      text: "Dost and Sathi haven't joined. Check that the Roxstar worker is running, then rejoin.",
+      text: "Kabir and Saraah haven't joined. Check that the Roxstar worker is running, then rejoin.",
     };
   }
 

@@ -60,5 +60,6 @@ export interface Session {
   url: string;
   token: string;
   name: string;
-  room: string;
+  room: string; // the LiveKit room name, which is the room code
+  title: string; // optional human title set when the room was created ('' if none)
 }

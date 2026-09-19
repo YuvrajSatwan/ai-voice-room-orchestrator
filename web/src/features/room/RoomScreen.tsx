@@ -36,7 +36,7 @@ export function RoomScreen({
     <SessionContext.Provider value={roomSession}>
       <RoomContext.Provider value={roomSession.room}>
         {phase === 'connecting' ? (
-          <Joining room={session.room} />
+          <Joining room={session.title || session.room} />
         ) : phase === 'lost' || phase === 'failed' ? (
           <RoomEnded failed={phase === 'failed'} onRejoin={onRejoin} onLeave={onLeave} />
         ) : (
@@ -69,7 +69,13 @@ function RoomLayout({ session }: { session: Session }) {
 
   return (
     <div className="room" data-panel={panelOpen || undefined}>
-      <RoomHeader room={session.room} phase={phase} panelOpen={panelOpen} onTogglePanel={togglePanel} />
+      <RoomHeader
+        room={session.room}
+        title={session.title}
+        phase={phase}
+        panelOpen={panelOpen}
+        onTogglePanel={togglePanel}
+      />
       <RoomNotice botsPresent={botsPresent} />
 
       <main className="room__body">

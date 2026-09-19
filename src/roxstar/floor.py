@@ -30,7 +30,7 @@ class FloorLease:
     def hand_over(self, persona: Persona) -> None:
         """Pass the floor to the next bot in the same plan without releasing it.
 
-        "Dost answer, Sathi example": no other turn can squeeze in between the two.
+        "Kabir answer, Saraah example": no other turn can squeeze in between the two.
         """
         self.persona = persona
 

@@ -8,7 +8,9 @@ from os import getenv
 from dotenv import load_dotenv
 
 # The worker registers under this name; the token server dispatches it into each room.
-AGENT_NAME = "roxstar"
+# Give a local run its own name (ROXSTAR_AGENT_NAME=roxstar-local) so a deployed worker on
+# the same LiveKit project can't pick up your local rooms.
+AGENT_NAME = getenv("ROXSTAR_AGENT_NAME", "").strip() or "roxstar"
 
 
 class ConfigurationError(ValueError):

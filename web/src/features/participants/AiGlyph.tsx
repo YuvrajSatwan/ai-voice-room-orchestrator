@@ -2,7 +2,7 @@
  * The AI presence mark: five capsules in a hairline ring, a small "living audio presence"
  * instead of an avatar.
  *
- * Each AI has its own silhouette (Dost: a steady arch; Sathi: a livelier, uneven line), so
+ * Each AI has its own silhouette (Kabir: a steady arch; Saraah: a livelier, uneven line), so
  * they're recognisable at rest. State comes from `data-state` (CSS does idle, listening,
  * thinking, interrupted, joining). While speaking, bar heights follow the participant's real
  * audio level: computed in requestAnimationFrame and written to CSS variables, never React state.

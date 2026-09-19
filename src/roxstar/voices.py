@@ -1,6 +1,7 @@
 """A bot's presence in the room: its own LiveKit participant, audio track, and chat sender.
 
-Each bot joins with its own identity (``ai-dost`` / ``ai-sathi``), so the room shows two
+Each bot joins with its own identity (``ai-dost`` / ``ai-sathi``, shown as Kabir / Saraah),
+so the room shows two
 separate AI participants and each voice comes from the right one. The brain decides *what*
 and *when*; this class only turns text into audio on that bot's track.
 
@@ -21,7 +22,7 @@ from livekit import api, rtc
 from livekit.agents import tts as lk_tts
 
 from roxstar.log import get_logger
-from roxstar.personas import PersonaConfiguration
+from roxstar.personas import PersonaConfiguration, for_speech
 
 _log = get_logger("voices")
 _SENTENCE_END = re.compile(r"(?<=[.!?।])\s+")
@@ -109,7 +110,7 @@ class BotVoice:
                 pending.cancel()
 
     async def _synthesize(self, sentence: str) -> list[rtc.AudioFrame]:
-        async with self._tts.synthesize(sentence) as stream:
+        async with self._tts.synthesize(for_speech(sentence)) as stream:
             return [chunk.frame async for chunk in stream]
 
     def _stop(self) -> bool:

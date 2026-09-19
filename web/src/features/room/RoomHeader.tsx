@@ -1,51 +1,55 @@
-import { Activity, Check, Link2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Activity, Check, Copy, Link2 } from 'lucide-react';
+import { useCopy } from '../../hooks/useCopy';
 import type { SessionPhase } from '../../hooks/useRoomSession';
-
-function useCopy(): [boolean, (text: string) => void] {
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(false), 1600);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
-  const copy = (text: string) => {
-    void navigator.clipboard?.writeText(text).then(() => setCopied(true));
-  };
-  return [copied, copy];
-}
+import { inviteLink } from '../../lib/roomCode';
 
 export function RoomHeader({
   room,
+  title,
   phase,
   panelOpen,
   onTogglePanel,
 }: {
   room: string;
+  title: string;
   phase: SessionPhase;
   panelOpen: boolean;
   onTogglePanel: () => void;
 }) {
-  const [copied, copy] = useCopy();
-  const invite = `${window.location.origin}${window.location.pathname}?room=${encodeURIComponent(room)}`;
+  const [codeCopied, copyCode] = useCopy();
+  const [linkCopied, copyLink] = useCopy();
   const live = phase === 'connected';
 
   return (
     <header className="room-header">
       <div className="room-header__id">
         <span className="wordmark">Roxstar</span>
-        <span className="room-header__room" title={room}>
-          {room}
+        <span className="room-header__room" title={title ? `${title} · ${room}` : room}>
+          {title || room}
         </span>
         <button
           type="button"
           className="icon-btn icon-btn--sm"
-          onClick={() => copy(invite)}
-          aria-label={copied ? 'Invite link copied' : 'Copy invite link'}
-          data-tip={copied ? 'Copied' : 'Copy invite link'}
+          onClick={() => copyCode(room)}
+          aria-label={codeCopied ? 'Room code copied' : `Copy room code ${room}`}
+          data-tip={codeCopied ? 'Copied' : `Copy code · ${room}`}
           data-tip-below=""
         >
-          {copied ? (
+          {codeCopied ? (
+            <Check size={15} strokeWidth={2} aria-hidden="true" />
+          ) : (
+            <Copy size={15} strokeWidth={1.75} aria-hidden="true" />
+          )}
+        </button>
+        <button
+          type="button"
+          className="icon-btn icon-btn--sm"
+          onClick={() => copyLink(inviteLink(room))}
+          aria-label={linkCopied ? 'Invite link copied' : 'Copy invite link'}
+          data-tip={linkCopied ? 'Copied' : 'Copy invite link'}
+          data-tip-below=""
+        >
+          {linkCopied ? (
             <Check size={15} strokeWidth={2} aria-hidden="true" />
           ) : (
             <Link2 size={15} strokeWidth={1.75} aria-hidden="true" />

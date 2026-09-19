@@ -4,8 +4,8 @@
 
 What joins the room:
 - the job's own connection  = the room brain (listens, never speaks, hidden in the UI)
-- ai-dost                    = Roxstar AI Dost's voice + chat (male, Sarvam "shubh")
-- ai-sathi                   = Roxstar AI Sathi's voice + chat (female, Sarvam "simran")
+- ai-dost                    = Kabir's voice + chat (male, Sarvam "shubh")
+- ai-sathi                   = Saraah's voice + chat (female, Sarvam "simran")
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ import asyncio
 import contextlib
 import json
 import time
+from collections.abc import Callable
 
 import livekit.plugins.sarvam as sarvam
 from livekit import rtc
@@ -50,6 +51,48 @@ def make_stt(settings: Settings) -> sarvam.STT:
         mode=settings.stt_mode,
         api_key=settings.sarvam_api_key,
     )
+
+
+# How long a room keeps its bots with no humans in it (covers a page refresh or a quick
+# rejoin). After that the job ends, so abandoned rooms don't hold bots and memory forever.
+EMPTY_ROOM_GRACE_S = 90.0
+
+
+class EmptyRoomWatch:
+    """Calls ``on_empty`` once the room has had no humans for ``grace_s`` seconds.
+
+    ``check()`` is called whenever someone joins or leaves (and once at start, since the
+    first human connects a moment after the bots are dispatched). A human arriving during
+    the grace period cancels it.
+    """
+
+    def __init__(
+        self,
+        has_humans: Callable[[], bool],
+        on_empty: Callable[[], None],
+        *,
+        grace_s: float = EMPTY_ROOM_GRACE_S,
+    ) -> None:
+        self._has_humans = has_humans
+        self._on_empty = on_empty
+        self._grace_s = grace_s
+        self._timer: asyncio.TimerHandle | None = None
+
+    def check(self) -> None:
+        if self._has_humans():
+            self.cancel()
+        elif self._timer is None:
+            self._timer = asyncio.get_running_loop().call_later(self._grace_s, self._expire)
+
+    def cancel(self) -> None:
+        if self._timer is not None:
+            self._timer.cancel()
+            self._timer = None
+
+    def _expire(self) -> None:
+        self._timer = None
+        if not self._has_humans():
+            self._on_empty()
 
 
 def parse_chat(packet: rtc.DataPacket) -> str | None:
@@ -150,15 +193,28 @@ async def entrypoint(ctx: JobContext) -> None:
                 speaker=packet.participant.identity, text=text, channel=InputChannel.TEXT
             )
 
+    def close_empty_room() -> None:
+        _log.info("room_empty_shutdown", extra={"room": ctx.room.name})
+        ctx.shutdown(reason="no humans left in the room")
+
+    empty_watch = EmptyRoomWatch(
+        lambda: any(is_human(p) for p in ctx.room.remote_participants.values()),
+        close_empty_room,
+    )
+    empty_watch.check()
+
     @ctx.room.on("participant_connected")
     def on_join(participant: rtc.RemoteParticipant) -> None:
         _log.info("participant_joined", extra={"participant": participant.identity})
+        empty_watch.check()
 
     @ctx.room.on("participant_disconnected")
     def on_leave(participant: rtc.RemoteParticipant) -> None:
         _log.info("participant_left", extra={"participant": participant.identity})
+        empty_watch.check()
 
     async def shutdown() -> None:
+        empty_watch.cancel()
         await listener.aclose()
         for voice in bots.values():
             await voice.aclose()

@@ -10,10 +10,11 @@ export interface AiProfile {
   initial: string;
 }
 
-// Mirrors src/roxstar/personas.py: Dost speaks with a male voice, Sathi with a female one.
+// Mirrors src/roxstar/personas.py. The internal ids ('dost', 'sathi', 'ai-dost', 'ai-sathi')
+// stay stable; only the names people see are Kabir (male voice) and Saraah (female voice).
 export const AI_PROFILES: Record<Persona, AiProfile> = {
-  dost: { persona: 'dost', identity: 'ai-dost', name: 'Dost', gender: 'Male', initial: 'D' },
-  sathi: { persona: 'sathi', identity: 'ai-sathi', name: 'Sathi', gender: 'Female', initial: 'S' },
+  dost: { persona: 'dost', identity: 'ai-dost', name: 'Kabir', gender: 'Male', initial: 'K' },
+  sathi: { persona: 'sathi', identity: 'ai-sathi', name: 'Saraah', gender: 'Female', initial: 'S' },
 };
 
 export const AI_ORDER: Persona[] = ['dost', 'sathi'];
@@ -38,7 +39,7 @@ export function isHuman(p: Participant): boolean {
   return !isBrain(p) && personaOf(p) === null;
 }
 
-/** Short display name: "Dost" for bots, the typed name for humans. */
+/** Display name: "Kabir" / "Saraah" for bots, the typed name for humans. */
 export function displayName(p: Participant): string {
   const persona = personaOf(p);
   if (persona) return AI_PROFILES[persona].name;

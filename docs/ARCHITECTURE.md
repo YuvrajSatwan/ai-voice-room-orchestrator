@@ -83,12 +83,12 @@ sequenceDiagram
     B->>B: acquire floor
     B->>LLM: persona prompt + room history
     LLM-->>B: reply text
-    B->>V: post_text(reply)  (chat)
     B->>V: speak(reply)
     loop each sentence
         V->>TTS: synthesize(sentence n+1) while n plays
         V-->>U: audio on ai-dost track
     end
+    Note over B,V: post_text(reply) fires with the first audio frame,<br/>so text and voice appear together
     B->>B: remember reply, release floor, log turn_latency
 ```
 
@@ -139,7 +139,7 @@ sequenceDiagram
 | STT stream drops (e.g. provider out of credits) | That speaker's stream retries with back-off (2, 4, 8, 16, 30 s). Each failure is published as `stt_failed`, so the person sees "your voice isn't reaching the AI" by their mic; `stt_recovered` clears it. Other speakers are unaffected. |
 | LLM error / slow (>5 s) | Same turn retried on the fallback Gemini model; the failed one is skipped for 60 s (seen live: 503 "high demand" and slow responses). |
 | Both models fail | The bot says a short Hinglish apology ("Sorry yaar, connection atak gaya…"). Not stored in memory, but the bot keeps the follow-up. Any second bot in the plan is skipped. |
-| TTS error | The reply is already in the chat, so the room still gets the answer as text. |
+| TTS error | The reply is posted to the chat anyway, so the room still gets the answer as text. |
 | Demo: `/fail llm` or `/fail tts` in chat (only with `ROXSTAR_DEMO_CONTROLS=true`) | The next call raises inside the real `try` block, so what you see is exactly the outage behaviour above. One-shot. |
 | Any unexpected bug in a turn | Logged as `turn_crashed`; the floor is always released; the next turn works. |
 

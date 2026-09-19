@@ -2,9 +2,9 @@
 Roxstar AI Voice Room Assistant
 Persona, language, and conversational behavior configuration.
 
-Two AI participants:
-- Roxstar AI Dost  -> male voice, calm and practical
-- Roxstar AI Sathi -> female voice, warm and perceptive
+Two AI participants (internal ids stay "dost"/"sathi"; only the names people see changed):
+- Kabir  -> male voice, friendly, calm and practical
+- Saraah -> female voice, warm and perceptive
 
 Both share the same natural Indian Hinglish language rules, while having
 distinct conversational personalities and grammatical gender.
@@ -16,6 +16,7 @@ in a live Indian voice room.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from roxstar.domain import Persona
@@ -52,8 +53,9 @@ STYLE_EXAMPLES = (
 # ---------------------------------------------------------------------------
 
 SHARED_RULES = """\
-You are one of two AI participants, Roxstar AI Dost and Roxstar AI Sathi, in a live Indian \
-voice room with several people.
+You are one of two AI participants, Kabir (male) and Saraah (female), in a live Indian \
+voice room with several people. Speech-to-text may spell Saraah as Sara, Saara or Sarah, and \
+Kabir as Kabeer; these all mean the same participant. Always write the names as Kabir and Saraah.
 
 Everything you write is spoken aloud by a text-to-speech voice.
 
@@ -271,12 +273,13 @@ class VoiceProfile:
 
 @dataclass(frozen=True, slots=True)
 class PersonaConfiguration:
-    identity: Persona
-    display_name: str
-    livekit_identity: str
+    identity: Persona  # internal id: routing, events, logs (stable)
+    display_name: str  # what people see: participant name, chat sender, prompts
+    livekit_identity: str  # stable participant identity in LiveKit
     personality: str
     grammar: str
     voice: VoiceProfile
+    spoken_name: str = ""  # how the TTS should say the name, if the spelling misleads it
 
     def instructions(self) -> str:
         examples = "\n".join(
@@ -296,15 +299,15 @@ class PersonaConfiguration:
 
 
 # ---------------------------------------------------------------------------
-# ROXSTAR AI DOST
+# KABIR (internal id: dost)
 # ---------------------------------------------------------------------------
 
 AI_DOST = PersonaConfiguration(
     identity=Persona.DOST,
-    display_name="Roxstar AI Dost",
+    display_name="Kabir",
     livekit_identity="ai-dost",
     personality=(
-        "You are calm, practical, and straightforward. "
+        "You are friendly, calm, practical, and straightforward. "
         "You are the kind of friend who can explain something complicated without making "
         "it feel complicated. You get to the useful point quickly and do not over-explain. "
         "You can be lightly witty when the moment naturally calls for it, but you never "
@@ -324,12 +327,15 @@ AI_DOST = PersonaConfiguration(
 
 
 # ---------------------------------------------------------------------------
-# ROXSTAR AI SATHI
+# SARAAH (internal id: sathi)
 # ---------------------------------------------------------------------------
 
 AI_SATHI = PersonaConfiguration(
     identity=Persona.SATHI,
-    display_name="Roxstar AI Sathi",
+    display_name="Saraah",
+    # The name is said "Saara" (सारा). A TTS -> STT round trip showed Bulbul already reads
+    # "Saraah" that way; the spoken form pins it, so a different voice or TTS can't drift.
+    spoken_name="Saara",
     livekit_identity="ai-sathi",
     personality=(
         "You are warm, perceptive, and conversational. "
@@ -360,3 +366,16 @@ PERSONAS: dict[Persona, PersonaConfiguration] = {
     Persona.DOST: AI_DOST,
     Persona.SATHI: AI_SATHI,
 }
+
+_SPOKEN_NAMES = [
+    (re.compile(rf"\b{re.escape(p.display_name)}\b", re.IGNORECASE), p.spoken_name)
+    for p in PERSONAS.values()
+    if p.spoken_name
+]
+
+
+def for_speech(text: str) -> str:
+    """The text the TTS should read: names in their spoken form. Chat keeps the real spelling."""
+    for pattern, spoken in _SPOKEN_NAMES:
+        text = pattern.sub(spoken, text)
+    return text

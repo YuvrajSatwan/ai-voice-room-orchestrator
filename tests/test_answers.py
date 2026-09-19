@@ -46,7 +46,7 @@ def test_the_answer_window_closes_after_two_turns() -> None:
     say = lambda text: memory.record_human(  # noqa: E731
         UserTurn.now(room_name="r", speaker_id="achal", text=text, channel=VOICE)
     )
-    say("Sathi, meri aawaaz aa rahi hai?")
+    say("Saraah, meri aawaaz aa rahi hai?")
     memory.record_bot(Persona.SATHI, SATHI_ASKS)
     say("kuch bhi yaar")
     assert memory.routing_context("achal").bot_asked_question
@@ -57,7 +57,7 @@ def test_the_answer_window_closes_after_two_turns() -> None:
 
 async def test_live_bug_answer_to_sathis_question_now_gets_a_reply() -> None:
     brain, bots, _, llm = make_brain(llm=FakeLLM(reply=SATHI_ASKS))
-    await brain.handle_turn(speaker="achal", text="Sathi, meri aawaaz aa rahi hai?", channel=VOICE)
+    await brain.handle_turn(speaker="achal", text="Sara, meri aawaaz aa rahi hai?", channel=VOICE)
     assert bots[Persona.SATHI].chat == [SATHI_ASKS]
 
     plan = await brain.handle_turn(speaker="achal", text="कुछ भी यार जो तुम चाहो।", channel=VOICE)
@@ -71,9 +71,9 @@ async def test_an_answer_that_arrives_while_the_bot_is_still_speaking_also_count
 
     brain, bots, _, _ = make_brain(llm=FakeLLM(reply=SATHI_ASKS), speak_s=0.2)
     first = asyncio.create_task(
-        brain.handle_turn(speaker="achal", text="Sathi, sun rahi ho?", channel=VOICE)
+        brain.handle_turn(speaker="achal", text="Saraah, sun rahi ho?", channel=VOICE)
     )
-    await asyncio.sleep(0.1)  # Sathi is mid-sentence; the question flag is already set
+    await asyncio.sleep(0.1)  # Saraah is mid-sentence; the question flag is already set
     plan = await brain.handle_turn(
         speaker="achal", text="haan, kuch bhi", channel=InputChannel.TEXT
     )

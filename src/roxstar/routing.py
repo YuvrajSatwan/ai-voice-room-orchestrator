@@ -1,8 +1,9 @@
 """Decides which bot (if any) answers a turn, using simple, explainable rules.
 
 Rules, in order:
-1. Named        - "AI Dost, ..." / "Sathi ..." -> that bot. Both named -> both, in the order
-                  they were named (still one after another, never together).
+1. Named        - "Kabir, ..." / "Saraah ..." (or "Sara, ...", "Saara ...": see names.py)
+                  -> that bot. Both named -> both, in the order they were named (still one
+                  after another, never together).
 2. Follow-up    - "uski", "simple batao", "yeh bahut lamba hai" right after a bot spoke
                   -> the bot that spoke last.
 3. Answer       - the bot's last reply ended with a question ("Batao, kya discuss karna
@@ -10,11 +11,11 @@ Rules, in order:
                   even with no name or question words ("kuch bhi yaar, jo tum chaho").
 4. Question     - an unnamed question or request ("AI kya hai?", "cloud samjhao") that is
                   not aimed at another human by name -> the bot already in the conversation,
-                  or AI Dost if neither has spoken yet.
+                  or Kabir if neither has spoken yet.
 5. Otherwise    - silence. "ohh", "thank you", "mera naam Rahul hai", or Rahul talking to
                   Priya get no reply (they are still remembered).
 
-Speech-to-text returns Hinglish in mixed script ("AI दोस्त, cloud क्या है"), so every rule
+Speech-to-text returns Hinglish in mixed script ("कबीर, cloud क्या है"), so every rule
 matches both Roman and Devanagari spellings.
 """
 
@@ -24,11 +25,7 @@ import re
 from dataclasses import dataclass, field
 
 from roxstar.domain import Persona, ResponseDecision, UserTurn
-
-_NAME_PATTERNS = {
-    Persona.DOST: re.compile(r"\bdost\b|दोस्त", re.IGNORECASE),
-    Persona.SATHI: re.compile(r"\bsaa?thi\b|साथी", re.IGNORECASE),
-}
+from roxstar.names import addressed_bots
 
 # Continue / reshape the bot's last answer.
 _FOLLOW_UP = re.compile(
@@ -115,13 +112,8 @@ class Router:
 
     @staticmethod
     def named_personas(text: str) -> tuple[Persona, ...]:
-        """Bots named in the text, in the order they appear."""
-        hits = [
-            (match.start(), persona)
-            for persona, pattern in _NAME_PATTERNS.items()
-            if (match := pattern.search(text))
-        ]
-        return tuple(persona for _, persona in sorted(hits))
+        """Bots named in the text, in the order they appear (spelling variants: names.py)."""
+        return addressed_bots(text)
 
 
 def is_follow_up(text: str) -> bool:

@@ -103,7 +103,7 @@ async def test_summary_questions_are_routed_to_a_bot() -> None:
 
 @pytest.mark.parametrize(
     "text",
-    ["tu chutiya hai", "Dost, you are a bitch", "साले हरामी", "bhenchod kya bakwas hai", "BSDK"],
+    ["tu chutiya hai", "Kabir, you are a bitch", "साले हरामी", "bhenchod kya bakwas hai", "BSDK"],
 )
 def test_abuse_is_detected_in_roman_devanagari_and_english(text: str) -> None:
     assert is_abusive(text)
@@ -128,7 +128,7 @@ def test_known_trade_off_a_word_list_cannot_read_context() -> None:
 
 
 def test_mask_hides_only_the_abusive_word() -> None:
-    assert mask("Dost tu chutiya hai kya?") == "Dost tu *** hai kya?"
+    assert mask("Kabir tu chutiya hai kya?") == "Kabir tu *** hai kya?"
 
 
 async def test_abusive_turn_gets_a_calm_reply_and_never_reaches_the_llm() -> None:
@@ -145,7 +145,7 @@ async def test_abusive_turn_gets_a_calm_reply_and_never_reaches_the_llm() -> Non
 
 async def test_abuse_aimed_at_sathi_is_answered_by_sathi() -> None:
     brain, bots, _, _ = make_brain()
-    await brain.handle_turn(speaker="Rahul", text="Sathi tu harami hai", channel=VOICE)
+    await brain.handle_turn(speaker="Rahul", text="Saraah tu harami hai", channel=VOICE)
     assert bots[Persona.SATHI].chat == [WARNING_LINES[Persona.SATHI]]
 
 

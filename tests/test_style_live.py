@@ -84,7 +84,7 @@ async def test_s5_session_memory(live) -> None:
 
 async def test_s7_two_bots_in_order_with_their_own_gender(live) -> None:
     ask, bots = live
-    await ask("Rahul", "AI Dost, tum answer karo. AI Sathi, baad mein ek example dena. Topic: AI")
+    await ask("Rahul", "Kabir, tum short answer do. Saraah, tum example dena. Topic: AI")
     (dost,) = bots[Persona.DOST].chat
     (sathi,) = bots[Persona.SATHI].chat
     assert_natural(dost)

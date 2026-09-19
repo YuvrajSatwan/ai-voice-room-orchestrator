@@ -44,7 +44,7 @@ FALLBACK_LINES = {
 SUMMARY_BATCH = 6
 SUMMARIZER_INSTRUCTIONS = """\
 You maintain a short running summary of a live voice-room conversation between humans and
-two AI assistants (Roxstar AI Dost, Roxstar AI Sathi). Merge the new turns into the existing
+two AI assistants (Kabir, Saraah). Merge the new turns into the existing
 summary. Write at most 120 words of plain English: who asked about which topics and the key
 points the assistants gave. Do NOT include personal details people shared about themselves
 (hobbies, locations, jobs, etc.); those are stored separately and are private. Output only
@@ -315,19 +315,36 @@ class RoomBrain:
         # arrives while it is still talking ("thoda aur simple batao") comes back to it.
         self.memory.note_responder(persona, asked=asks_question(reply))
         bot = self._bots[persona]
-        try:
-            await bot.post_text(reply)
-            timer.mark("chat_posted")
-        except Exception as exc:
-            _log.warning(
-                "chat_publish_failed", extra={"bot": persona.value, "error": type(exc).__name__}
-            )
+
+        # The text appears in the chat when the voice starts, not before: synthesizing the
+        # first sentence takes ~2 s, and text that far ahead of the voice looks out of sync.
+        # If the voice never starts (TTS failed, or the user interrupted first), the text is
+        # still posted afterwards, so the room always gets the answer.
+        posting: asyncio.Task[None] | None = None
+
+        async def post() -> None:
+            try:
+                await bot.post_text(reply)
+                timer.mark("chat_posted")
+            except Exception as exc:
+                _log.warning(
+                    "chat_publish_failed", extra={"bot": persona.value, "error": type(exc).__name__}
+                )
+
+        def on_first_audio() -> None:
+            nonlocal posting
+            timer.mark("first_audio")
+            posting = asyncio.create_task(post())
+
+        async def ensure_posted() -> None:
+            await (posting if posting is not None else post())
 
         try:
             self._maybe_fail("tts")
-            finished = await bot.speak(reply, lease.cancelled, lambda: timer.mark("first_audio"))
+            finished = await bot.speak(reply, lease.cancelled, on_first_audio)
         except Exception as exc:
-            # Voice failed, but the reply already reached the chat, so the room still has it.
+            # Voice failed, but the reply still reaches the chat, so the room has it.
+            await ensure_posted()
             _log.warning(
                 "tts_failed",
                 extra={"turn_id": lease.turn_id, "bot": persona.value, "error": type(exc).__name__},
@@ -340,6 +357,7 @@ class RoomBrain:
             self._finish(timer, "text_only")
             return llm_ok
 
+        await ensure_posted()
         if not finished:
             self.memory.record_bot(persona, reply, interrupted=True)
             self._finish(timer, "interrupted")

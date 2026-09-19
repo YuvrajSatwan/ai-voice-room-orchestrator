@@ -25,11 +25,11 @@ def route(
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
-        ("AI Dost, AI kya hota hai?", DOST),
-        ("Sathi, can you explain cloud computing?", SATHI),
-        ("Saathi ek example do", SATHI),
-        ("AI दोस्त, cloud क्या है?", DOST),  # STT codemix output
-        ("Hello AI साथी।", SATHI),  # heard in the live test
+        ("Kabir, AI kya hota hai?", DOST),
+        ("Saraah, can you explain cloud computing?", SATHI),
+        ("Saara ek example do", SATHI),
+        ("कबीर, cloud क्या है?", DOST),  # STT codemix output
+        ("Hello सारा।", SATHI),  # STT writes the name in Devanagari
     ],
 )
 def test_a_named_bot_always_answers(text: str, expected: Persona) -> None:
@@ -43,7 +43,7 @@ def test_both_bots_named_answer_in_the_order_named() -> None:
         DOST,
         SATHI,
     )
-    assert route("Sathi pehle bolo, phir Dost").responders == (SATHI, DOST)
+    assert route("Saraah pehle bolo, phir Kabir").responders == (SATHI, DOST)
 
 
 # 2. Follow-up -----------------------------------------------------------------------------

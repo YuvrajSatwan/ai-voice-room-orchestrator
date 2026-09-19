@@ -9,8 +9,8 @@ Sarvam's streaming STT runs voice-activity detection on its side and sends:
 - FINAL_TRANSCRIPT -> collected by ``UtteranceMerger``, then one turn goes to the brain and
                     to the room chat
 
-Why merge? People pause mid-sentence. "AI Sathi, [pause] cloud kya hai?" arrives as two
-finals, and without merging "AI Sathi" becomes its own turn and the question goes to the
+Why merge? People pause mid-sentence. "Saraah, [pause] cloud kya hai?" arrives as two
+finals, and without merging "Saraah" becomes its own turn and the question goes to the
 wrong bot (seen in live testing).
 
 If a stream fails (network, provider down, out of credits) it is restarted with an
@@ -35,6 +35,7 @@ from livekit.agents import stt as lk_stt
 from roxstar.brain import RoomBrain
 from roxstar.domain import InputChannel
 from roxstar.log import get_logger
+from roxstar.names import is_only_a_call
 
 _log = get_logger("listener")
 _SAMPLE_RATE = 16_000
@@ -49,10 +50,10 @@ def retry_delay(failures: int) -> float:
     return min(_RETRY_MAX_S, _RETRY_BASE_S * 2 ** max(0, failures - 1))
 
 
-# A fragment that is only a bot's name, or ends mid-thought, is clearly not the whole turn.
+# A fragment that ends mid-thought is clearly not the whole turn. (A fragment that is only a
+# bot's name, like "Kabir," or "हेलो सारा।", is detected by names.is_only_a_call.)
 _UNFINISHED = re.compile(
-    r"^(?:(?:hey|hi|hello|suno|ai|roxstar|dost|saa?thi|दोस्त|साथी|एआई)[\s,।.!]*)+$"
-    r"|(?:,|\b(?:aur|ki|ke|ko|to|toh|and|but|or)|(?:^|\s)(?:और|कि|तो))[\s।.]*$",
+    r"(?:,|\b(?:aur|ki|ke|ko|to|toh|and|but|or)|(?:^|\s)(?:और|कि|तो))[\s।.]*$",
     re.IGNORECASE,
 )
 
@@ -89,7 +90,8 @@ class UtteranceMerger:
         if not text:
             return
         self._parts.append(text)
-        unfinished = _UNFINISHED.search(" ".join(self._parts))
+        so_far = " ".join(self._parts)
+        unfinished = is_only_a_call(so_far) or bool(_UNFINISHED.search(so_far))
         self._schedule(self._unfinished_hold_s if unfinished else self._hold_s)
 
     def flush(self) -> None:
