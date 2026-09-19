@@ -27,7 +27,7 @@ from roxstar.floor import FloorLease, SpeakingFloor
 from roxstar.llm import ReplyFn, TextFn
 from roxstar.log import get_logger
 from roxstar.moderation import WARNING_LINES, is_abusive, mask
-from roxstar.personas import PERSONAS
+from roxstar.personas import PERSONAS, lint_reply
 from roxstar.routing import ResponsePlan, Router, asks_question
 from roxstar.telemetry import TurnTimer
 
@@ -308,6 +308,7 @@ class RoomBrain:
                 "turn_id": lease.turn_id,
                 "bot": persona.value,
                 "chars": len(reply),
+                "lints": lint_reply(reply, persona),
                 **self._maybe_text(reply),
             },
         )

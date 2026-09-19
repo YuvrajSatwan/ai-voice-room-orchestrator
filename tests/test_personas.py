@@ -15,8 +15,8 @@ def test_two_distinct_identities_and_voices() -> None:
 @BOTH
 def test_prompt_asks_for_hinglish_even_for_english_questions(persona) -> None:
     prompt = persona.instructions()
-    assert "Reply in Hinglish even when the question is in English" in prompt
-    assert "Use full English only if someone asks" in prompt
+    assert "Reply in Roman-script Hinglish" in prompt
+    assert "Speak full English only when asked" in prompt
 
 
 @BOTH
@@ -30,7 +30,7 @@ def test_prompt_carries_the_assignment_style_benchmark(persona) -> None:
 def test_prompt_keeps_spoken_replies_short_and_plain(persona) -> None:
     prompt = persona.instructions()
     assert "1 to 3 sentences" in prompt
-    assert "no markdown" in prompt
+    assert "No markdown" in prompt
 
 
 def test_each_bot_speaks_with_its_own_grammatical_gender() -> None:

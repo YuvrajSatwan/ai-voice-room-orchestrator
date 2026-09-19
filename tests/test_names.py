@@ -17,8 +17,8 @@ def test_display_names_changed_but_internal_ids_did_not() -> None:
     assert (AI_DOST.display_name, AI_SATHI.display_name) == ("Kabir", "Saraah")
     assert (AI_DOST.livekit_identity, AI_SATHI.livekit_identity) == ("ai-dost", "ai-sathi")
     assert (KABIR.value, SARAAH.value) == ("dost", "sathi")
-    assert "You are Kabir." in AI_DOST.instructions()
-    assert "You are Saraah." in AI_SATHI.instructions()
+    assert "YOU ARE KABIR" in AI_DOST.instructions()
+    assert "YOU ARE SARAAH" in AI_SATHI.instructions()
 
 
 @pytest.mark.parametrize(
