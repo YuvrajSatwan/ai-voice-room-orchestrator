@@ -13,7 +13,6 @@ import type { Session } from '../../types/room';
 import { JoinErrorNote } from '../join/JoinErrorNote';
 import { MicCheck } from '../join/MicCheck';
 import { rememberName, storedName } from '../join/nameStore';
-import { ServerWakeNotice } from '../join/ServerWakeNotice';
 import { AiGlyph } from '../participants/AiGlyph';
 import { RoomScreen } from './RoomScreen';
 
@@ -99,9 +98,6 @@ function RoomEntry({ code }: { code: string }) {
         </div>
         <p className="fullscreen__title">Opening {code}</p>
         <p className="fullscreen__body">Getting the room ready and bringing in Kabir and Saraah…</p>
-        <div className="fullscreen__note">
-          <ServerWakeNotice />
-        </div>
       </div>
     );
   }
@@ -139,7 +135,6 @@ function RoomEntry({ code }: { code: string }) {
             Room code <code className="entry__code">{code}</code>
           </p>
         </header>
-        <ServerWakeNotice />
         <form className="join__form" onSubmit={submit} noValidate aria-label="Join this room">
           <div className="field">
             <label className="field__label" htmlFor="room-entry-name">
