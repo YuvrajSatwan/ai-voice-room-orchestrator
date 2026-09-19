@@ -13,6 +13,7 @@ Failover, per turn:
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import Awaitable, Callable, Sequence
 from time import monotonic
 
@@ -31,6 +32,7 @@ _log = get_logger("llm")
 # safety net, and is high enough that a thinking model's hidden tokens can't truncate a reply.
 _MAX_TOKENS = 1024
 _TEMPERATURE = 0.7
+_API_KEY = re.compile(r"AIza[\w-]+")
 
 
 class LLMError(RuntimeError):
@@ -96,7 +98,12 @@ def gemini_text_fn(
                     raise LLMError("empty reply")
             except Exception as exc:
                 failed_at[model] = monotonic()
-                errors.append(f"{model}: {type(exc).__name__} {getattr(exc, 'code', '')}".strip())
+                # Provider messages distinguish a bad key, blocked project, unsupported region,
+                # or malformed request. Keep them visible in deployment logs, but never log a key.
+                detail = _API_KEY.sub("[redacted]", str(exc)).replace("\n", " ")[:300]
+                errors.append(
+                    f"{model}: {type(exc).__name__} {getattr(exc, 'code', '')} {detail}".strip()
+                )
                 continue
             if errors:
                 _log.warning("llm_failover_used", extra={"model": model, "failed": errors})
