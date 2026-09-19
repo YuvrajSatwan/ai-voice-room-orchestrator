@@ -18,7 +18,7 @@ from collections.abc import Callable
 
 import livekit.plugins.sarvam as sarvam
 from livekit import rtc
-from livekit.agents import AutoSubscribe, JobContext, WorkerOptions, cli
+from livekit.agents import AutoSubscribe, JobContext, JobExecutorType, WorkerOptions, cli
 
 from roxstar.brain import RoomBrain
 from roxstar.config import AGENT_NAME, Settings
@@ -234,6 +234,12 @@ def main() -> None:
             # that, so LiveKit stops sending rooms). Start jobs on demand, never refuse rooms.
             num_idle_processes=0,
             load_threshold=float("inf"),
+            # Run each room's job as a thread in this process (the Windows default) rather
+            # than a new process (the Linux default). On a small shared CPU a fresh process
+            # re-imports LiveKit, Sarvam and Gemini and missed the 10 s start-up limit: the job
+            # was accepted but the bots never joined. Threads reuse what is already loaded.
+            job_executor_type=JobExecutorType.THREAD,
+            initialize_process_timeout=60.0,
         )
     )
 

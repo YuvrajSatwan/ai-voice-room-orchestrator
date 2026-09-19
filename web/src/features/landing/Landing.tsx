@@ -9,6 +9,7 @@ import { MicCheck } from '../join/MicCheck';
 import { AiGlyph } from '../participants/AiGlyph';
 import { JoinErrorNote } from '../join/JoinErrorNote';
 import { rememberName, storedName } from '../join/nameStore';
+import { ServerWakeNotice } from '../join/ServerWakeNotice';
 
 type View = 'home' | 'create' | 'join' | { created: { room: string; title: string } };
 
@@ -30,6 +31,8 @@ export function Landing() {
           <h1 className="join__title">AI Voice Room Assistant</h1>
           <p className="join__lead">Real-time conversations with AI participants.</p>
         </header>
+
+        <ServerWakeNotice />
 
         {view === 'home' && (
           <>

@@ -287,3 +287,59 @@
   background: var(--surface-sunken);
   color: var(--ink);
 }
+
+/* ---------------------------------------------------------------- Server waking up */
+
+.server-note {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--warn-soft);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  text-align: left;
+  animation: fade-up var(--dur) var(--ease);
+}
+
+.server-note .spinner {
+  margin-top: 3px;
+}
+
+.server-note strong {
+  color: var(--ink);
+  font-weight: var(--weight-medium);
+}
+
+.server-note__timer {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--warn);
+}
+
+.server-note--down {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  background: var(--danger-soft);
+}
+
+.server-note__retry {
+  min-height: var(--control-sm);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.fullscreen__note {
+  width: min(100%, 420px);
+  margin-top: var(--space-5);
+}
