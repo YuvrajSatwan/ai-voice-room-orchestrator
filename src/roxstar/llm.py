@@ -4,10 +4,10 @@ Models: ``gemini-3.5-flash-lite`` first (no hidden "thinking", natural Hinglish)
 ``gemini-flash-lite-latest`` as the fallback (a different model, so a separate capacity pool).
 
 Failover, per turn:
-- each model gets ``per_model_timeout_s``; on an error or timeout, the next model is tried;
-- a model that just failed is skipped for ``cooldown_s``, so when Gemini is overloaded (503)
+- each (key, model) combination gets ``per_model_timeout_s``; on an error or timeout, the next is tried;
+- a combination that just failed is skipped for ``cooldown_s``, so when Gemini is overloaded (503)
   every user doesn't wait for the same failure again;
-- only if every model fails does the brain speak its apology line.
+- only if every combination fails does the brain speak its apology line.
 """
 
 from __future__ import annotations
@@ -43,10 +43,16 @@ def create_text_fn(settings: Settings) -> TextFn:
     """One Gemini client (and one failover state) shared by replies and summaries."""
     if not settings.gemini_api_key:
         raise ConfigurationError("GEMINI_API_KEY is required")
+        
+    keys = [settings.gemini_api_key]
+    if settings.gemini_fallback_api_key and settings.gemini_fallback_api_key not in keys:
+        keys.append(settings.gemini_fallback_api_key)
+        
     models = [settings.gemini_model]
     if settings.gemini_fallback_model and settings.gemini_fallback_model not in models:
         models.append(settings.gemini_fallback_model)
-    return gemini_text_fn(api_key=settings.gemini_api_key, models=models)
+        
+    return gemini_text_fn(api_keys=keys, models=models)
 
 
 def create_reply_fn(settings: Settings) -> ReplyFn:
@@ -60,22 +66,22 @@ def reply_fn_from(text_fn: TextFn) -> ReplyFn:
     return reply
 
 
-def gemini_reply_fn(*, api_key: str, models: Sequence[str], **options: float) -> ReplyFn:
-    return reply_fn_from(gemini_text_fn(api_key=api_key, models=models, **options))
+def gemini_reply_fn(*, api_keys: Sequence[str], models: Sequence[str], **options: float) -> ReplyFn:
+    return reply_fn_from(gemini_text_fn(api_keys=api_keys, models=models, **options))
 
 
 def gemini_text_fn(
     *,
-    api_key: str,
+    api_keys: Sequence[str],
     models: Sequence[str],
     per_model_timeout_s: float = 5.0,
     cooldown_s: float = 60.0,
 ) -> TextFn:
-    client = genai.Client(api_key=api_key)
-    failed_at: dict[str, float] = {}
+    clients = [(key, genai.Client(api_key=key)) for key in api_keys]
+    failed_at: dict[tuple[str, str], float] = {}
 
-    def in_cooldown(model: str) -> bool:
-        return monotonic() - failed_at.get(model, -cooldown_s) < cooldown_s
+    def in_cooldown(combo: tuple[str, str]) -> bool:
+        return monotonic() - failed_at.get(combo, -cooldown_s) < cooldown_s
 
     async def generate(system: str, prompt: str) -> str:
         config = types.GenerateContentConfig(
@@ -84,10 +90,15 @@ def gemini_text_fn(
             max_output_tokens=_MAX_TOKENS,
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         )
-        # Healthy models first; cooling-down ones are still tried last rather than never.
-        order = sorted(models, key=in_cooldown)
+        
+        # Build all combinations of (key, model)
+        combos = [(key, model, client) for key, client in clients for model in models]
+        
+        # Healthy combinations first; cooling-down ones are still tried last rather than never.
+        order = sorted(combos, key=lambda c: in_cooldown((c[0], c[1])))
         errors: list[str] = []
-        for model in order:
+        
+        for key, model, client in order:
             try:
                 response = await asyncio.wait_for(
                     client.aio.models.generate_content(model=model, contents=prompt, config=config),
@@ -97,12 +108,13 @@ def gemini_text_fn(
                 if not text:
                     raise LLMError("empty reply")
             except Exception as exc:
-                failed_at[model] = monotonic()
+                failed_at[(key, model)] = monotonic()
                 # Provider messages distinguish a bad key, blocked project, unsupported region,
                 # or malformed request. Keep them visible in deployment logs, but never log a key.
                 detail = _API_KEY.sub("[redacted]", str(exc)).replace("\n", " ")[:300]
+                key_suffix = key[-4:] if len(key) > 4 else key
                 errors.append(
-                    f"{model}: {type(exc).__name__} {getattr(exc, 'code', '')} {detail}".strip()
+                    f"{model} (key ...{key_suffix}): {type(exc).__name__} {getattr(exc, 'code', '')} {detail}".strip()
                 )
                 continue
             if errors:
