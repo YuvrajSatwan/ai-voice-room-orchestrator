@@ -24,11 +24,12 @@ services:
         value: gemini-2.5-flash
 
   # 2. Frontend Static Site: React UI with Vite
-  - type: static
+  - type: web
     name: roxstar-frontend
+    runtime: static
     rootDir: web
     buildCommand: npm install && npm run build
-    publishPath: ./dist
+    staticPublishPath: ./dist
     routes:
       - type: rewrite
         source: /*
