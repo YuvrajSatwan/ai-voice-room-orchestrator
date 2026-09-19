@@ -126,7 +126,14 @@ async def entrypoint(ctx: JobContext) -> None:
             api_key=settings.livekit_api_key,
             api_secret=settings.livekit_api_secret,
         )
-        await voice.connect(settings.livekit_url, token)
+        try:
+            await voice.connect(settings.livekit_url, token)
+        except Exception as exc:
+            _log.error(
+                "bot_initial_connect_failed",
+                extra={"bot": cfg.livekit_identity, "error": str(exc)},
+            )
+            asyncio.create_task(voice._reconnect())
         bots[persona] = voice
 
     background: set[asyncio.Task[None]] = set()

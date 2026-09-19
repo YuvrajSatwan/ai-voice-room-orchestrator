@@ -60,8 +60,47 @@ class BotVoice:
         self._tts = tts
         self._room = rtc.Room()
         self._source = rtc.AudioSource(tts.sample_rate, tts.num_channels)
+        self._url: str = ""
+        self._token: str = ""
+        self._closed: bool = False
+        self._setup_room_listeners()
+
+    def _setup_room_listeners(self) -> None:
+        @self._room.on("disconnected")
+        def _on_disconnected(reason: object = None) -> None:
+            _log.warning(
+                "bot_disconnected",
+                extra={"bot": self.persona.livekit_identity, "reason": str(reason)},
+            )
+            if not self._closed:
+                asyncio.create_task(self._reconnect())
+
+    async def _reconnect(self) -> None:
+        if self._closed or not self._url or not self._token:
+            return
+        await asyncio.sleep(1.0)
+        if self._closed or self._room.isconnected():
+            return
+        _log.info("bot_reconnecting", extra={"bot": self.persona.livekit_identity})
+        try:
+            self._room = rtc.Room()
+            self._setup_room_listeners()
+            await self._room.connect(self._url, self._token, options=rtc.RoomOptions(auto_subscribe=False))
+            track = rtc.LocalAudioTrack.create_audio_track("voice", self._source)
+            await self._room.local_participant.publish_track(
+                track, rtc.TrackPublishOptions(source=rtc.TrackSource.SOURCE_MICROPHONE)
+            )
+            _log.info("bot_reconnected", extra={"bot": self.persona.livekit_identity})
+        except Exception as exc:
+            _log.error(
+                "bot_reconnect_failed",
+                extra={"bot": self.persona.livekit_identity, "error": str(exc)},
+            )
 
     async def connect(self, url: str, token: str) -> None:
+        self._url = url
+        self._token = token
+        self._closed = False
         await self._room.connect(url, token, options=rtc.RoomOptions(auto_subscribe=False))
         track = rtc.LocalAudioTrack.create_audio_track("voice", self._source)
         await self._room.local_participant.publish_track(
@@ -70,9 +109,13 @@ class BotVoice:
         _log.info("bot_joined", extra={"bot": self.persona.livekit_identity})
 
     async def aclose(self) -> None:
+        self._closed = True
         await self._room.disconnect()
 
     async def post_text(self, text: str) -> None:
+        if not self._room.isconnected():
+            _log.warning("bot_not_connected_skip_chat", extra={"bot": self.persona.livekit_identity})
+            return
         payload = {
             "type": "roxstar.chat",
             "sender": self.persona.display_name,
