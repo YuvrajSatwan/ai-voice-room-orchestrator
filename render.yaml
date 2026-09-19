@@ -1,0 +1,39 @@
+services:
+  # 1. Backend Web Service: Token server on $PORT + LiveKit worker
+  - type: web
+    name: roxstar-backend
+    env: python
+    buildCommand: pip install -e .
+    startCommand: python -m roxstar.server
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+
+  # 2. Frontend Static Site: React UI with Vite
+  - type: web
+    name: roxstar-frontend
+    env: static
+    rootDir: web
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    plan: free
+    envVars:
+      - key: VITE_TOKEN_URL
+        fromService:
+          type: web
+          name: roxstar-backend
+          property: host

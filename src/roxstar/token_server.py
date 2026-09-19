@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
 from datetime import timedelta
 from http import HTTPStatus
@@ -158,13 +159,15 @@ class TokenHandler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    """Start the development token service on http://localhost:8000."""
+    """Start the token service on http://host:port."""
     try:
         settings = Settings.from_environment(require_livekit=True)
     except ConfigurationError as exc:
         raise SystemExit(str(exc)) from exc
     TokenHandler.settings = settings
-    ThreadingHTTPServer(("127.0.0.1", 8000), TokenHandler).serve_forever()
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", 8000))
+    ThreadingHTTPServer((host, port), TokenHandler).serve_forever()
 
 
 if __name__ == "__main__":
