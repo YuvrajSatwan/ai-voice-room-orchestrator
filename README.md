@@ -25,7 +25,8 @@ src/roxstar/
   personas.py      Dost and Sathi: prompts and voices
   telemetry.py     per-reply latency log line
   config.py, log.py, domain.py
-  token_server.py  dev-only: browser tokens + worker dispatch
+  token_server.py  browser tokens + worker dispatch (POST /token, GET /health)
+  server.py        hosted entry point: worker in the background + token server on $PORT
 web/               the room UI: React + LiveKit (presence, transcript, intelligence panel)
 tests/             brain scenarios, routing, memory, floor, helpers (no network)
 docs/              architecture, decisions, interview notes
@@ -50,7 +51,7 @@ cd web && npm install
 
 ```bash
 python -m roxstar.worker dev          # 1. the worker (brain + both bots)
-python -m roxstar.token_server        # 2. dev token server on 127.0.0.1:8000
+python -m roxstar.token_server        # 2. token server on port 8000
 cd web && npm run dev                 # 3. the UI on http://localhost:5174
 ```
 
@@ -58,7 +59,28 @@ To show failure handling in the demo, start the worker with `ROXSTAR_DEMO_CONTRO
 type `/fail llm` (the bot apologizes) or `/fail tts` (the answer arrives as text only) in chat.
 
 Open the UI in two browser windows with different names (e.g. Rahul and Priya) and the same room.
-Both bots join automatically. Speak, or use the chat and the "Demo scenarios" buttons.
+Both bots join automatically. Speak, or type in the chat.
+
+## Environment variables
+
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` | yes | — | LiveKit Cloud project |
+| `SARVAM_API_KEY` | yes (voice) | — | Sarvam speech-to-text and text-to-speech |
+| `GEMINI_API_KEY` | yes | — | Gemini replies and summaries |
+| `GEMINI_MODEL` / `GEMINI_FALLBACK_MODEL` | no | `gemini-3.5-flash-lite` / `gemini-flash-lite-latest` | main and fallback model |
+| `SARVAM_STT_MODEL` / `SARVAM_STT_MODE` | no | `saaras:v3` / `codemix` | speech-to-text model and mode |
+| `ROXSTAR_LOG_LEVEL` / `ROXSTAR_LOG_FORMAT` | no | `INFO` / `json` | logging |
+| `ROXSTAR_LOG_TRANSCRIPTS` | no | off | also log conversation text (demo/debug only) |
+| `ROXSTAR_DEMO_CONTROLS` | no | off | enables `/fail llm` and `/fail tts` in chat |
+| `HOST` / `PORT` | no | `0.0.0.0` / `8000` | token server bind address |
+| `VITE_TOKEN_URL` (in `web/.env`) | no | `http://127.0.0.1:8000` | where the UI asks for tokens |
+
+## Deploy (Render)
+`render.yaml` defines two services: `roxstar-backend` runs `python -m roxstar.server` (the worker
+plus the token server on `$PORT`), and `roxstar-frontend` builds `web/` as a static site. The
+token server has no user authentication, so a public deployment lets anyone who finds the URL
+join rooms and start the bots (and spend API credits).
 
 ## Test
 
@@ -74,7 +96,8 @@ transcript (p90 4.8 s). Breakdown in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md
 
 ## Status
 - ✅ Phase 1: both bots live in the room, multi-user listening, two-bot routing, barge-in, failure handling
-- ✅ Phase 2: Hinglish even for English, reply only when relevant, short replies, style tests (voice pick pending)
+- ✅ Phase 2: Hinglish even for English, reply only when relevant, short replies, style tests, voices (`shubh`, `simran`)
 - ✅ Phase 3: live checks (two humans, reconnect, `/fail` demo switch, latency measured)
 - ✅ Phase 4: "Abhi tak kya discuss hua?" rolling summary, moderation
-- ⏳ Phase 5: git repo, final docs, demo video
+- ✅ Git repository and Render deployment config
+- ⏳ Demo video, cost notes

@@ -20,7 +20,6 @@ from dataclasses import dataclass
 
 from roxstar.domain import Persona
 
-
 # ---------------------------------------------------------------------------
 # NATURAL HINGLISH STYLE BENCHMARK
 # ---------------------------------------------------------------------------

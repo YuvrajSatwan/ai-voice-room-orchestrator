@@ -169,7 +169,17 @@ async def entrypoint(ctx: JobContext) -> None:
 def main() -> None:
     settings = Settings.from_environment(require_livekit=False)
     configure_logging(level=settings.log_level, log_format=settings.log_format)
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint, agent_name=AGENT_NAME))
+    cli.run_app(
+        WorkerOptions(
+            entrypoint_fnc=entrypoint,
+            agent_name=AGENT_NAME,
+            # Production defaults assume a big machine: 4 pre-started job processes (runs a
+            # 512 MB host out of memory) and "full" at 70% CPU (a small shared CPU sits above
+            # that, so LiveKit stops sending rooms). Start jobs on demand, never refuse rooms.
+            num_idle_processes=0,
+            load_threshold=float("inf"),
+        )
+    )
 
 
 if __name__ == "__main__":
