@@ -24,6 +24,7 @@ class Settings:
     livekit_api_secret: str
     sarvam_api_key: str | None
     gemini_api_key: str | None = None
+    gemini_fallback_api_key: str | None = None
     gemini_model: str = "gemini-3.5-flash-lite"
     gemini_fallback_model: str = "gemini-flash-lite-latest"
     stt_model: str = "saaras:v3"
@@ -42,6 +43,7 @@ class Settings:
             "livekit_api_secret": getenv("LIVEKIT_API_SECRET", "").strip(),
             "sarvam_api_key": getenv("SARVAM_API_KEY") or None,
             "gemini_api_key": getenv("GEMINI_API_KEY") or getenv("GOOGLE_API_KEY") or None,
+            "gemini_fallback_api_key": getenv("GEMINI_FALLBACK_API_KEY") or None,
             "gemini_model": getenv("GEMINI_MODEL", "").strip() or "gemini-3.5-flash-lite",
             "gemini_fallback_model": (
                 getenv("GEMINI_FALLBACK_MODEL", "").strip() or "gemini-flash-lite-latest"
