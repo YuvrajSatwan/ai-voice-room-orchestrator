@@ -4,7 +4,9 @@
  */
 import type { Session } from '../types/room';
 
-const BASE_URL = (import.meta.env.VITE_TOKEN_URL as string | undefined) ?? 'http://127.0.0.1:8000';
+const RAW_URL = (import.meta.env.VITE_TOKEN_URL as string | undefined) ?? 'http://127.0.0.1:8000';
+const BASE_URL =
+  RAW_URL.startsWith('http://') || RAW_URL.startsWith('https://') ? RAW_URL : `https://${RAW_URL}`;
 
 export class JoinError extends Error {
   constructor(

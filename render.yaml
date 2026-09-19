@@ -2,7 +2,7 @@ services:
   # 1. Backend Web Service: Token server on $PORT + LiveKit worker
   - type: web
     name: roxstar-backend
-    env: python
+    runtime: python
     buildCommand: pip install -e .
     startCommand: python -m roxstar.server
     plan: free
@@ -24,13 +24,15 @@ services:
         value: gemini-2.5-flash
 
   # 2. Frontend Static Site: React UI with Vite
-  - type: web
+  - type: static
     name: roxstar-frontend
-    env: static
     rootDir: web
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    plan: free
+    publishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_TOKEN_URL
         fromService:
